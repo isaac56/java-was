@@ -4,10 +4,12 @@ import model.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import util.HttpRequestUtils;
+import util.IOUtils;
 
 import java.io.*;
 import java.net.Socket;
 import java.nio.file.Files;
+import java.util.HashMap;
 import java.util.Map;
 
 public class RequestHandler extends Thread {
@@ -30,14 +32,28 @@ public class RequestHandler extends Thread {
             if (line == null) {
                 return;
             }
-            String path = HttpRequestUtils.getURI(line);
+
+            log.debug("first Line : {}", line);
+            Map<String, String> headerMap = HttpRequestUtils.parseFirstLine(line);
+
+            line = bufferedReader.readLine();
+            while (!line.isEmpty()) {
+                String[] headers = line.split(": ");
+                if (headers.length != 2) {
+                    continue;
+                }
+                headerMap.put(headers[0], headers[1]);
+
+                line = bufferedReader.readLine();
+            }
+
+            String path = headerMap.get("URI");
 
             if (path.startsWith("/user/create")) {
-                int index = path.indexOf("?");
-                String queryString = path.substring(index + 1);
-                log.debug("queryString: {}", queryString);
+                int contentLength = Integer.valueOf(headerMap.get("Content-Length"));
+                String body = IOUtils.readData(bufferedReader, contentLength);
 
-                Map<String, String> params = HttpRequestUtils.parseQueryString(queryString);
+                Map<String, String> params = HttpRequestUtils.parseQueryString(body);
 
                 User user = new User(params.get("userId"), params.get("password"), params.get("name"), params.get("email"));
                 log.debug("User created: {}", user);
