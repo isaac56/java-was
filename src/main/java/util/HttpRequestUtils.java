@@ -4,12 +4,17 @@ import com.google.common.base.Strings;
 import com.google.common.collect.Maps;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 
 public class HttpRequestUtils {
-    public static String getURI(String firstLine) {
-        return firstLine.split(" ")[1];
+    public static Map<String, String> parseFirstLine(String firstLine) {
+        Map<String, String> firstLineValue = new HashMap<>();
+        String[] splitted = firstLine.split(" ");
+        firstLineValue.put("URI", splitted[1]);
+        firstLineValue.put("Method", splitted[0]);
+        return firstLineValue;
     }
 
     /**
